@@ -1,0 +1,96 @@
+
+-- 1. создаю первую таблицу - с основными данными
+
+DROP TABLE workers_basic;
+DROP TABLE workers_departments;
+DROP TABLE year_bonus;
+
+--CREATE TYPE grade_type AS ENUM ('jun', 'mid', 'sen');
+--CREATE TYPE score_type AS ENUM ('A', 'B', 'C', 'D', 'E');
+
+CREATE TABLE IF NOT EXISTS workers_departments (
+	id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	dep_name VARCHAR(30) NOT NULL,
+	dep_head_name VARCHAR(30) NOT NULL,
+	dep_w_number INTEGER
+);
+INSERT INTO workers_departments (dep_name, dep_head_name,dep_w_number) VALUES 
+('бухгалтерия','Счетоводов И.Я.', 1),
+('IT','Прогер Ф.И.', 4),
+('Менеджмент', 'Успехов А.А.', 1);
+
+CREATE TABLE IF NOT EXISTS workers_basic (
+	id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	Lastname CHARACTER VARYING(30) NOT NULL,
+	Firstname CHARACTER VARYING(30) NOT NULL,
+	Fathersname CHARACTER VARYING(30) NOT NULL,
+	birth_date DATE NOT NULL,
+	work_start_date DATE NOT NULL,
+	job_title CHARACTER VARYING(30),
+	skill_level grade_type,
+	salary INTEGER,
+	department_id INTEGER,
+	driving_license BOOLEAN,
+	CONSTRAINT department_fk
+		FOREIGN KEY (department_id)
+		REFERENCES workers_departments(id)
+		ON DELETE CASCADE
+);
+
+INSERT INTO workers_basic (lastname,firstname,fathersname,birth_date,work_start_date,job_title,skill_level,salary,department_id,driving_license) 
+VALUES 
+('Счетоводов','Иван','Яковлевич',TO_DATE('02.11.2000', 'DD/MM/YYYY'),TO_DATE('02.11.2020', 'DD/MM/YYYY'),'бухгалтер','jun',100000,1,True), 
+('Прогер','Федор','Иванович',TO_DATE('01.12.2000', 'DD/MM/YYYY'),TO_DATE('02.11.2020', 'DD/MM/YYYY'),'аналитик','mid',120000,2,True),
+('Успехов','Аркадий','Алексеевич',TO_DATE('03.1.2000', 'DD/MM/YYYY'),TO_DATE('02.11.2020', 'DD/MM/YYYY'),'менеджер','sen',111111,3,True),
+('Смехов','Петрос','Ваганович',TO_DATE('06.6.2000', 'DD/MM/YYYY'),TO_DATE('02.11.2020', 'DD/MM/YYYY'),'инженер','jun',180000,2,False),
+('Муромский','Илья','Ильич',TO_DATE('07.11.2000', 'DD/MM/YYYY'),TO_DATE('02.11.2020', 'DD/MM/YYYY'),'инженер','mid',100000,2,False),
+('Попович','Алексей','Владимирович',TO_DATE('20.02.2000', 'DD/MM/YYYY'),TO_DATE('02.11.2020', 'DD/MM/YYYY'),'фулл','sen',70000,2,False);
+
+CREATE TABLE IF NOT EXISTS year_bonus AS SELECT ID, lastname,firstname,fathersname FROM workers_basic;
+ALTER TABLE year_bonus ADD COLUMN quater_1 VARCHAR (2), ADD COLUMN quater_2 VARCHAR (2),ADD COLUMN quater_3 VARCHAR (2), ADD COLUMN quater_4 VARCHAR (2);
+UPDATE year_bonus SET quater_1 = 'B', quater_2 = 'B',quater_3 = 'B',quater_4 = 'C' WHERE id=1;
+UPDATE year_bonus SET quater_1 = 'A', quater_2 = 'A',quater_3 = 'B',quater_4 = 'E' WHERE id=2;
+UPDATE year_bonus SET quater_1 = 'B', quater_2 = 'A',quater_3 = 'B',quater_4 = 'C' WHERE id=3;
+UPDATE year_bonus SET quater_1 = 'E', quater_2 = 'E',quater_3 = 'B',quater_4 = 'C' WHERE id=4;
+UPDATE year_bonus SET quater_1 = 'D', quater_2 = 'B',quater_3 = 'E',quater_4 = 'C' WHERE id=5;
+UPDATE year_bonus SET quater_1 = 'D', quater_2 = 'D',quater_3 = 'A',quater_4 = 'A' WHERE id=6;
+
+INSERT INTO workers_departments (dep_name, dep_head_name,dep_w_number) VALUES 
+('Интеллектуальный анализ данных', 'Куров И.И.', 2);
+
+INSERT INTO workers_basic (lastname,firstname,fathersname,birth_date,work_start_date,job_title,skill_level,salary,department_id,driving_license) VALUES 
+('Куров','Илья','Иванович',TO_DATE('09.11.2002', 'DD/MM/YYYY'),TO_DATE('02.11.2021', 'DD/MM/YYYY'),'инженер','mid',100000,4,False),
+('Исхаков','Рамзан','Ирекович',TO_DATE('20.11.2003', 'DD/MM/YYYY'),TO_DATE('02.11.2021', 'DD/MM/YYYY'),'инженер','jun',70000,4,False);
+
+
+
+INSERT INTO year_bonus (id, lastname, firstname, fathersname, quater_1, quater_2, quater_3, quater_4) VALUES
+(7,'Куров','Илья','Иванович', 'A', 'B', 'C', 'D'),
+(8,'Исхаков','Рамзан','Ирекович', 'B', 'B', 'C', 'B');
+
+
+
+
+--6.1 Уникальный номер сотрудника, его ФИО и стаж работы – для всех сотрудников компании 
+SELECT id, firstname, lastname, fathersname, (NOW() - work_start_date) FROM workers_basic;
+
+-- 6.2 Уникальный номер сотрудника, его ФИО и стаж работы – только первых 3-х сотрудников
+SELECT id, firstname, lastname, fathersname, (NOW() - work_start_date) FROM workers_basic LIMIT 3;
+
+-- 6.3 Уникальный номер сотрудников - водителей
+SELECT id, lastname FROM workers_basic WHERE driving_license = TRUE;
+
+-- 6.4 Выведите номера сотрудников, которые хотя бы за 1 квартал получили оценку D или E
+SELECT id, lastname FROM year_bonus WHERE quater_1 = 'D' or quater_2 ='D' or quater_3 = 'D' or quater_4 ='D' or
+quater_1 = 'E' or quater_2 ='E' or quater_3 = 'E' or quater_4 ='E';
+
+-- 6.5 Выведите самую высокую зарплату в компании.
+SELECT (salary) FROM workers_basic ORDER BY salary DESC LIMIT 1;
+
+select * from workers_basic
+
+
+
+
+
+
